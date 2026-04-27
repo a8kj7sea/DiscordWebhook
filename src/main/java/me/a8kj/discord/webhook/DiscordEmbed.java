@@ -132,18 +132,16 @@ public class DiscordEmbed {
     @Builder
     public static class Field {
         /**
+         * Whether the field should display inline with others.
+         */
+        boolean inline;
+        /**
          * The name (header) of the field.
          */
         private String name;
-
         /**
          * The value (content) of the field.
          */
         private String value;
-
-        /**
-         * Whether the field should display inline with others.
-         */
-        boolean inline;
     }
 }
