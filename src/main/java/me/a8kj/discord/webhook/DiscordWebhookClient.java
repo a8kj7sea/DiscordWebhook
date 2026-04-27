@@ -17,10 +17,9 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class DiscordWebhookClient implements WebhookSender {
 
+    private static final MediaType JSON_MEDIA_TYPE = MediaType.get("application/json; charset=utf-8");
     private final String webhookUrl;
     private final OkHttpClient httpClient = new OkHttpClient();
-    private static final MediaType JSON_MEDIA_TYPE = MediaType.get("application/json; charset=utf-8");
-
     /**
      * Configured GSON instance to handle Discord's snake_case naming requirement.
      */
@@ -30,12 +29,13 @@ public class DiscordWebhookClient implements WebhookSender {
 
     /**
      * Sends the provided payload to the configured Discord Webhook URL.
+     * This implementation catches {@link IOException} and wraps it in a {@link WebhookResult}.
      *
      * @param payload The message and embed data to send.
-     * @throws IOException If the request fails or the Discord API returns an error code.
+     * @return A {@link WebhookResult} indicating if the message was delivered.
      */
     @Override
-    public void send(DiscordPayload payload) throws IOException {
+    public WebhookResult send(DiscordPayload payload) {
         String jsonString = gson.toJson(payload);
         RequestBody body = RequestBody.create(jsonString, JSON_MEDIA_TYPE);
 
@@ -47,10 +47,14 @@ public class DiscordWebhookClient implements WebhookSender {
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
+            if (response.isSuccessful()) {
+                return WebhookResult.success(response.code());
+            } else {
                 String errorBody = response.body() != null ? response.body().string() : "No error body";
-                throw new IOException("Discord API Error: " + response.code() + " - " + response.message() + " | Details: " + errorBody);
+                return WebhookResult.failure(response.code(), errorBody);
             }
+        } catch (IOException e) {
+            return WebhookResult.error(e.getMessage());
         }
     }
 }
