@@ -1,14 +1,14 @@
 package me.a8kj.discord.webhook;
 
 /**
- * Modern entry point demonstrating the fluent builder API for Discord webhooks.
+ * Modern entry point demonstrating the fluent builder API and handling the WebhookResult.
  *
  * @author a8kj7sea
  */
 public class Main {
     public static void main(String[] args) {
         // Your Webhook URL
-        final String WEBHOOK_URL = "YOUR_WEBHOOK_URL_HERE";
+        final String WEBHOOK_URL = "webhook_link";
 
         // Initialize the client using the WebhookSender abstraction
         WebhookSender sender = new DiscordWebhookClient(WEBHOOK_URL);
@@ -43,12 +43,15 @@ public class Main {
                         .build())
                 .build();
 
-        // Dispatch the request
-        try {
-            sender.send(payload);
-            System.out.println("Payload dispatched successfully.");
-        } catch (Exception e) {
-            System.err.println("Failed to send webhook: " + e.getMessage());
+        // Dispatch the request and handle the structured result
+        WebhookResult result = sender.send(payload);
+
+        if (result.isSuccessful()) {
+            System.out.println("Payload dispatched successfully. HTTP Status: " + result.getStatusCode());
+        } else {
+            System.err.println("Failed to send webhook!");
+            System.err.println("Status Code: " + result.getStatusCode());
+            System.err.println("Reason: " + result.getErrorMessage());
         }
     }
 }
